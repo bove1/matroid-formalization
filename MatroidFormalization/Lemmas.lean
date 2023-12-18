@@ -1,62 +1,18 @@
-import MatroidFormalization.MatroidLib
+import MatroidFormalization.Defs
 
-prefix:75  "#"   => Finset.card
+/-
+  This file is where I'm burying all of the lemmas for the things I
+  actually did get around to proving. I didn't really do a good job naming
+  these, but it follows a pretty simple structure. x_lemi is the ith
+  lemma I needed about the X definition for matroids. x_yi is the
+  proof of the ith axiom for the y definition in the conversion from the
+  x definition.
 
-class IMatroid (α : Type) [DecidableEq α]  where
-  E       : Finset α
-  ind     : Finset (Finset α)
-  indPow  : ind ⊆ E.powerset
-  i1      : ∅ ∈ ind
-  i2      : ∀I2 ∈ ind, ∀I1 ∈ E.powerset,
-            I1 ⊆ I2 → I1 ∈ ind
-  i3      : ∀I1 ∈ ind, ∀I2 ∈ ind,
-             #I1 < #I2 →
-             ∃e ∈ I2 \ I1, I1 ∪ {e} ∈ ind
+  I recommend closing all of the lemmas and examining them one at a time.
+-/
 
-class BMatroid (α : Type) [DecidableEq α] where
-  E         : Finset α
-  basis     : Finset (Finset α)
-  basisPow  : basis ⊆ E.powerset
-  b1        : basis ≠ ∅
-  b2        : ∀B1 ∈ basis, ∀B2 ∈ basis, ∀e ∈ (B1 \ B2),
-              ∃f ∈ (B2 \ B1), (B1 \ {e}) ∪ {f} ∈ basis
-
-class CMatroid (α : Type) [DecidableEq α]where
-  E       : Finset α
-  circ    : Finset (Finset α)
-  circPow : circ ⊆ E.powerset
-  c1      : ∅ ∉ circ
-  c2      : ∀C1 ∈ circ, ∀C2 ∈ E.powerset,
-          C2 ⊂ C1 → C2 ∉ circ
-  c3      : ∀C1 ∈ circ, ∀C2 : circ, C1 ≠ C2 →
-          ∃e ∈ C1 ∩ C2, ∃C3 ∈ circ, C3 ⊆ (C1 ∪ C2) \ {e}
-
-class RMatroid (α : Type) [DecidableEq α] where
-  E     : Finset α
-  rk    : Finset α → ℕ
-  r1    : ∀A ∈ E.powerset, rk A ≤ #A
-  r2    : ∀A ∈ E.powerset, ∀ B ∈ E.powerset,
-          rk (A ∪ B) + rk (A ∩ B) ≤ rk A + rk B
-  r3    : ∀A ∈ E.powerset, ∀e ∈  E,
-          rk A ≤ rk (A ∪ {e}) ∧ rk (A ∪ {e}) ≤ rk A + 1
-
-class ClMatroid (α : Type) [DecidableEq α] where
-  E     : Finset α
-  cl    : Finset α → Finset α
-  cl1   : ∀A ∈ E.powerset, A ⊆ (cl A)
-  cl2   : cl ∘ cl = cl
-  cl3   : ∀A B: Finset α, A ⊆ B → cl A ⊆ cl B
-  cl4   : ∀e ∈ E, ∀ f ∈ E, ∀A ∈ E.powerset,
-          e ∈ cl (A ∪ {f}) \ cl A → f ∈ cl (A ∪ {e}) \ cl A
-
-class HMatroid (α : Type) [DecidableEq α] where
-  E     : Finset α
-  hyp   : Finset (Finset α)
-  h1    : ∀A1 ∈ E.powerset, ∀A2 ∈ E.powerset, A2 ⊂ A1 →
-          (A1 ∉ hyp ∨ A2 ∉ hyp)
-  h2    : ∀e ∈ E, ∀H1 ∈ hyp, ∀H2 ∈ hyp, H1 ≠ H2 →
-          e ∉ H1 ∪ H2 → ∃H3 ∈ hyp, (H1 ∩ H2) ∪ {e} ⊆ H3
-
+-- This essentially proves the downward closedness of independent sets,
+-- in the case where the difference I1 ⊆ I2 is only one element.
 lemma rank_lem {α : Type} [DecidableEq α] (rmat : RMatroid α) :
   ∀I1 ∈ rmat.E.powerset, ∀I2 ∈ rmat.E.powerset,
   rmat.rk I1 = #I1 → I2 ⊆ I1 →
@@ -98,6 +54,8 @@ lemma rank_lem {α : Type} [DecidableEq α] (rmat : RMatroid α) :
     rw [h.symm, hind, hcard] at h3
     linarith
 
+-- This uses the previous result to extend downward closedness to
+-- arbitrary subsets.
 lemma rank_lem2 {α : Type} [DecidableEq α] (rmat : RMatroid α) (n : ℕ) :
   ∀I1 ∈ rmat.E.powerset, ∀I2 ∈ rmat.E.powerset,
   rmat.rk I1 = #I1 → I2 ⊆ I1 →
@@ -169,6 +127,7 @@ lemma rank_lem2 {α : Type} [DecidableEq α] (rmat : RMatroid α) (n : ℕ) :
         exact Finset.subset_union_left I2 {e}
       exact rank_lem rmat I3 h7 I2 hI2c h1 h8 h2
 
+-- This applies the previous result.
 lemma rank_lem3 {α : Type} [DecidableEq α] (rmat : RMatroid α) :
   ∀I1 ∈ rmat.E.powerset, ∀I2 ∈ rmat.E.powerset,
   rmat.rk I1 = #I1 → I2 ⊆ I1 →
@@ -178,6 +137,8 @@ lemma rank_lem3 {α : Type} [DecidableEq α] (rmat : RMatroid α) :
   have h: #I1 - #I2 = n := by simp only [ge_iff_le]
   exact rank_lem2 rmat n I1 hI1 I2 hI2 hcard hsub h
 
+-- I honestly don't remember what this proof (or the rest of
+-- the rank lemmas) means.
 lemma rank_lem4 {α : Type} [DecidableEq α] (rmat : RMatroid α) :
   ∀B ∈ RMatroid.E.powerset, ∀A ∈ rmat.E.powerset,
   B ⊆ A → (∀e ∈ A, RMatroid.rk (B) = RMatroid.rk (B ∪ {e})) → ∀f ∈ A,
@@ -352,7 +313,7 @@ lemma rank_lem5 {α : Type} [DecidableEq α] (rmat : RMatroid α) (n : ℕ):
         _= #C - #B - 1 := by
           simp only [Nat.sub_right_comm]
         _= Nat.succ m - 1 := by simp only [hcard]
-        _= m := by simp only [ge_iff_le, LoVe.Nat.le_succ,
+        _= m := by simp only [ge_iff_le, Nat.le_succ,
           nonpos_iff_eq_zero, Nat.succ_sub_succ_eq_sub, tsub_zero]
       have heInA : e ∈ A := by
         apply hsub3
@@ -451,7 +412,7 @@ lemma rank_lem6 {α : Type} [DecidableEq α] (rmat : RMatroid α) (n : ℕ):
         _= #C - #B - 1 := by
           simp only [Nat.sub_right_comm]
         _= Nat.succ m - 1 := by simp only [hcard]
-        _= m := by simp only [ge_iff_le, LoVe.Nat.le_succ,
+        _= m := by simp only [ge_iff_le, Nat.le_succ,
           nonpos_iff_eq_zero, Nat.succ_sub_succ_eq_sub, tsub_zero]
       have heInA : e ∈ A := by
         apply hsub3
@@ -559,168 +520,15 @@ lemma rank_lem8 (α : Type) [DecidableEq α] (rmat : RMatroid α) (n : ℕ):
         _= m.succ - 1 := by
           simp_all only [Finset.mem_powerset, ge_iff_le, gt_iff_lt, Nat.succ_pos',
             Finset.mem_sdiff, true_and, Finset.disjoint_singleton_right,
-            not_false_eq_true, LoVe.Nat.le_succ, nonpos_iff_eq_zero,
+            not_false_eq_true, Nat.le_succ, nonpos_iff_eq_zero,
             Nat.succ_sub_succ_eq_sub, tsub_zero]
-        _= m := by simp only [ge_iff_le, LoVe.Nat.le_succ, nonpos_iff_eq_zero,
+        _= m := by simp only [ge_iff_le, Nat.le_succ, nonpos_iff_eq_zero,
           Nat.succ_sub_succ_eq_sub, tsub_zero]
       have BigInduction := (rmat.r3 B hB e heInE).left
       have LittleInduction := hm (B ∪ {e}) hsubsE hsubsA hcardU
       exact Nat.le_trans BigInduction LittleInduction
 
-def R_to_I_conv (α : Type) [DecidableEq α] : RMatroid α → IMatroid α :=
-  fun rmat ↦ {
-    E     := rmat.E
-    ind   := Finset.filter (fun I : Finset α ↦ rmat.rk I = #I) rmat.E.powerset
-    indPow:= by
-      simp only [Finset.mem_powerset, Finset.filter_subset]
-    i1    := by
-      simp only [Finset.mem_powerset, Finset.mem_filter]
-      apply And.intro
-      intro a ha
-      apply False.elim
-      rename_i inst
-      simp_all only [Finset.not_mem_empty]
-      rw [Finset.card_empty]
-      have h1 : ∅ ∈ rmat.E.powerset := by
-        simp only [Finset.mem_powerset, Finset.empty_subset]
-      have h2 : RMatroid.rk ∅ ≤ #∅ := (RMatroid.r1 ∅) h1
-      rename_i inst
-      simp_all only [Finset.mem_powerset,
-        Finset.empty_subset, Finset.card_empty, nonpos_iff_eq_zero]
-    i2    := by
-      intro I1 hI1 I2 hI2 hSub
-      simp only [Finset.mem_powerset, Finset.mem_filter]
-      simp only [Finset.mem_powerset, Finset.mem_filter] at hI2
-      simp only [Finset.mem_powerset, Finset.mem_filter] at hI1
-      apply And.intro
-      exact hI2
-      have h1 : I1 ∈ RMatroid.E.powerset := by
-        simp only [Finset.mem_powerset, hI1.left]
-      have h2 : I2 ∈ RMatroid.E.powerset := by
-        simp only [Finset.mem_powerset, hI2]
-      exact rank_lem3 rmat I1 h1 I2 h2 hI1.right hSub
-    i3    := by
-      intro I1 hI1 I2 hI2 hcard
-      apply Or.elim (Classical.em
-        (∃ e, e ∈ I2 \ I1 ∧ I1 ∪ {e} ∈ Finset.filter
-        (fun I => RMatroid.rk I = #I)
-        (Finset.powerset RMatroid.E)))
-      intro h
-      exact h
-      intro contra
-      apply False.elim
-      have contra := forall_not_of_not_exists contra
-      have hI1pow : I1 ∈ rmat.E.powerset := by
-        simp only [Finset.mem_powerset, Finset.mem_filter] at hI1
-        simp only [Finset.mem_powerset]
-        exact hI1.left
-      have hI2pow : I2 ∈ rmat.E.powerset := by
-        simp only [Finset.mem_powerset, Finset.mem_filter] at hI2
-        simp only [Finset.mem_powerset]
-        exact hI2.left
-      have Upow : I1 ∪ I2 ∈ Finset.powerset RMatroid.E := by
-        simp only [Finset.mem_powerset]
-        intro e
-        simp only [Finset.mem_union]
-        intro hor
-        apply Or.elim hor
-        intro heI1
-        simp only [Finset.mem_powerset] at hI1pow
-        apply hI1pow
-        exact heI1
-        intro heI2
-        simp only [Finset.mem_powerset] at hI2pow
-        apply hI2pow
-        exact heI2
-      have hBig :
-        ∀ (e : α), e ∈ I1 ∪ I2 → RMatroid.rk I1 = RMatroid.rk (I1 ∪ {e}) := by
-        intro e he
-        apply Or.elim (Classical.em (e ∈ I1))
-        intro heInI1
-        have hesub : {e} ⊆ I1 := by
-          simp only [Finset.singleton_subset_iff, heInI1]
-        have hunion : I1 = I1 ∪ {e} := by
-          rename_i inst contra_1
-          simp_all only [Finset.mem_powerset, Finset.mem_filter, sdiff_self,
-          Finset.bot_eq_empty, Finset.not_mem_empty,
-          Finset.disjoint_singleton_right, false_and, exists_false, not_false_eq_true,
-          implies_true, Finset.mem_union,
-          true_or, Finset.singleton_subset_iff, Finset.left_eq_union_iff_subset]
-        rw [hunion.symm]
-        intro henInI1
-        have heInI2 : e ∈ I2 := by
-          rename_i inst contra_1
-          simp_all only [Finset.mem_powerset, Finset.mem_filter,
-            sdiff_self, Finset.bot_eq_empty, Finset.not_mem_empty,
-            Finset.disjoint_singleton_right, false_and, exists_false,
-            not_false_eq_true, implies_true, Finset.mem_union,
-            false_or]
-        have heInDiff : e ∈ I2 \ I1 := by
-          simp only [Finset.mem_sdiff]
-          apply And.intro heInI2 henInI1
-        have hinE : e ∈ rmat.E := by
-          simp only [Finset.mem_powerset] at hI2pow
-          apply hI2pow
-          exact heInI2
-        have hr3 := RMatroid.r3 I1 hI1pow e hinE
-        apply Or.elim (Classical.em (RMatroid.rk (I1 ∪ {e})  ≤ RMatroid.rk I1))
-        intro hcase1
-        exact Nat.le_antisymm hr3.left hcase1
-        intro hcase2
-        have hrk : RMatroid.rk (I1 ∪ {e}) = RMatroid.rk (I1) + 1 := by
-          linarith
-        have hcont := contra e
-        apply False.elim
-        apply hcont
-        apply And.intro
-        exact heInDiff
-        have hdisj : Disjoint I1 {e} := by
-          simp only [Finset.disjoint_singleton_right]
-          exact henInI1
-        have hcard2 : #(I1 ∪ {e}) = #(I1) + 1 := calc
-          #(I1 ∪ {e}) = #I1 + #{e} := by
-            simp only [Finset.disjoint_singleton_right, henInI1,
-              not_false_eq_true, Finset.card_disjoint_union,
-              Finset.card_singleton]
-          _= #(I1) + 1 := by
-            simp only [Finset.card_singleton]
-        simp only [Finset.mem_powerset, Finset.mem_filter,
-          Finset.disjoint_singleton_right]
-        have hinSubs : I1 ∪ {e} ⊆ RMatroid.E := by
-          intro f
-          rename_i inst contra_1
-          intro a
-          simp_all only [Finset.mem_powerset, Finset.mem_filter, Finset.mem_sdiff, Finset.disjoint_singleton_right, not_exists,
-            not_and, not_false_eq_true, Finset.card_disjoint_union, Finset.card_singleton, and_imp, implies_true,
-            Finset.mem_union, or_true, and_self, le_add_iff_nonneg_right, le_refl, add_le_iff_nonpos_right, and_true, true_and,
-            Finset.mem_singleton]
-          unhygienic with_reducible aesop_destruct_products
-          unhygienic aesop_cases a
-          · apply left
-            simp_all only [not_false_eq_true]
-          · aesop_subst h
-            simp_all only [not_false_eq_true]
-        apply And.intro
-        exact hinSubs
-        rw [hcard2, hrk]
-        simp? at hI1
-        rw [hI1.right]
-      have subU : I1 ⊆ I1 ∪ I2 := Finset.subset_union_left I1 I2
-      have hUnRk := rank_lem7 α rmat I1 hI1pow (I1 ∪ I2) Upow subU
-      have contra := hUnRk hBig
-      let n : ℕ := #(I1 ∪ I2) - #I2
-      have hndef : n = #(I1 ∪ I2) - #I2 := by
-        simp only [ge_iff_le]
-      have hlem := rank_lem8 α rmat n I2 hI2pow (I1 ∪ I2) Upow
-        (Finset.subset_union_right I1 I2) hndef.symm
-      rw [contra.symm] at hlem
-      simp only [Finset.mem_powerset, Finset.mem_filter] at hI1
-      simp only [Finset.mem_powerset, Finset.mem_filter] at hI2
-      rw [hI1.right] at hlem
-      rw [hI2.right] at hlem
-      linarith
-  }
-
+-- No basis is a proper subset of another.
 lemma basis_lem1 (α : Type) [DecidableEq α] (bmat : BMatroid α):
   ∀B1 ∈ bmat.basis, ∀B2 ∈ bmat.basis, B1 ⊆ B2 → B1 = B2 := by
   intro B1 hB1 B2 hB2 hsub
@@ -745,6 +553,7 @@ lemma basis_lem1 (α : Type) [DecidableEq α] (bmat : BMatroid α):
   rename_i inst hf_1
   simp_all only [Finset.mem_sdiff, Finset.not_mem_empty, not_true, false_and, exists_false]
 
+-- All bases have the same cardinality.
 lemma basis_lem2 (α : Type) [DecidableEq α] (bmat : BMatroid α):
   ∀B1 ∈ bmat.basis, ∀B2 ∈ bmat.basis, #B1 = #B2 := by
   have hInd : ∀n : ℕ, ∀B1 ∈ bmat.basis, ∀B2 ∈ bmat.basis,
@@ -852,7 +661,7 @@ lemma basis_lem2 (α : Type) [DecidableEq α] (bmat : BMatroid α):
         #B1 - (#(B1 ∩ B2) + 1) = #B1 - #(B1 ∩ B2) - 1 := by
           simp only [ge_iff_le, Nat.sub_add_eq, tsub_le_iff_right]
         _= m.succ - 1 := by simp [hcard]
-        _= m := by simp only [ge_iff_le, LoVe.Nat.le_succ, nonpos_iff_eq_zero,
+        _= m := by simp only [ge_iff_le, Nat.le_succ, nonpos_iff_eq_zero,
           Nat.succ_sub_succ_eq_sub, tsub_zero]
       exact final
   intro B1 hB1 B2 hB2
@@ -860,6 +669,7 @@ lemma basis_lem2 (α : Type) [DecidableEq α] (bmat : BMatroid α):
   have ndef: #B1 - #(B1 ∩ B2) = n := by simp only [ge_iff_le]
   exact hInd n B1 hB1 B2 hB2 ndef
 
+-- Showing maximal independents sets are the same size.
 lemma ind_lem1 (α : Type) [DecidableEq α] (imat : IMatroid α) :
   ∀B1 ∈ Finset.filter (fun I1 ↦ ∀ I2 ∈ imat.ind, I1 ⊆ I2 → I1 = I2) imat.ind,
   ∀B2 ∈ Finset.filter (fun I1 ↦ ∀ I2 ∈ imat.ind, I1 ⊆ I2 → I1 = I2) imat.ind,
@@ -907,6 +717,7 @@ lemma ind_lem1 (α : Type) [DecidableEq α] (imat : IMatroid α) :
     simp only [Finset.mem_sdiff] at he
     exact he.right hr
 
+-- All independent sets are in maximally independent set.
 lemma ind_lem2 {α : Type} [DecidableEq α] {imat : IMatroid α} :
   ∀I ∈ imat.ind, ∃B ∈ Finset.filter (fun I1 ↦ ∀ I2 ∈ imat.ind, I1 ⊆ I2 → I1 = I2) imat.ind,
   I ⊆ B := by
@@ -982,141 +793,7 @@ lemma ind_lem2 {α : Type} [DecidableEq α] {imat : IMatroid α} :
   exact Finset.eq_of_subset_of_card_le hsub hTrans
   exact hBl.right
 
-def I_to_B_conv (α : Type) [DecidableEq α] : IMatroid α → BMatroid α :=
-  fun imat ↦ {
-    E       := imat.E
-    basis   :=
-      Finset.filter (fun I1 ↦ ∀ I2 ∈ imat.ind, I1 ⊆ I2 → I1 = I2) imat.ind
-    basisPow := by
-      intro I1 hI1
-      simp only [Finset.mem_filter] at hI1
-      exact imat.indPow hI1.left
-    b1      := by
-      let maxInd : ℕ := Finset.fold Nat.max 0 Finset.card imat.ind
-      have hLeqSelf : maxInd ≤ Finset.fold Nat.max 0 Finset.card imat.ind := by
-          simp only [le_refl]
-      have hx := (Finset.le_fold_max maxInd).mp hLeqSelf
-      apply Finset.Nonempty.ne_empty
-      apply Or.elim hx
-      intro leq0
-      have eq0 : maxInd = 0 := by linarith
-      apply Exists.intro ∅
-      simp only [Finset.mem_filter, Finset.empty_subset, not_true]
-      apply And.intro
-      exact imat.i1
-      intro I hI _
-      apply Or.elim (Classical.em (∅ = I))
-      simp only [imp_self]
-      intro nonempty
-      have nonempty : ¬ I = ∅ := by
-        rename_i inst a
-        simp_all only [le_refl, Finset.mem_filter, zero_le, and_true, true_or]
-        apply Aesop.BuiltinRules.not_intro
-        intro a
-        aesop_subst a
-        simp_all only [not_true]
-      apply False.elim
-      have nonempty := Finset.nonempty_iff_ne_empty.mpr nonempty
-      have cardPos := Finset.Nonempty.card_pos nonempty
-      have leq02 := ((Finset.fold_max_le 0).mp leq0).right I hI
-      linarith
-      intro hEx
-      apply Exists.elim hEx
-      intro I1 hI1
-      apply Exists.intro I1
-      simp only [Finset.mem_filter]
-      apply And.intro
-      exact hI1.left
-      intro I2 hI2 hsub
-      have hImax := hI1.right
-      have maxCond := ((Finset.fold_max_le maxInd).mp hLeqSelf).right I2 hI2
-      have I2lI1 := Nat.le_trans maxCond hImax
-      exact Finset.eq_of_subset_of_card_le hsub I2lI1
-    b2      := by
-      intro B1 hB1 B2 hB2 e he
-      have hB1' := hB1
-      have hB2' := hB2
-      simp only [Finset.mem_filter] at hB1
-      simp only [Finset.mem_filter] at hB2
-      have Bmsubs : B1 \ {e} ⊆ B1 := by
-        simp_all only [Finset.mem_sdiff, not_true, Finset.sdiff_subset]
-      have Bmpow : B1 \ {e} ∈ Finset.powerset IMatroid.E := by
-        simp only [Finset.mem_powerset]
-        intro b hb
-        simp only [Finset.mem_sdiff, Finset.mem_singleton] at hb
-        have hpow : B1 ∈ imat.E.powerset := imat.indPow hB1.left
-        simp only [Finset.mem_powerset] at hpow
-        exact hpow hb.left
-      have Bmind : B1 \ {e} ∈ imat.ind :=
-        imat.i2 B1 hB1.left (B1 \ {e}) Bmpow Bmsubs
-      have Eq : #B1 = #B2 := ind_lem1 α imat B1 hB1' B2 hB2'
-      have esub : {e} ⊆ B1 := by
-        rename_i inst
-        simp_all only [Finset.mem_sdiff, not_true, Finset.sdiff_subset,
-        Finset.mem_powerset, Finset.singleton_subset_iff]
-      have hCardge : #{e} ≤ #B1 := Finset.card_le_of_subset esub
-      simp only [Finset.card_singleton] at hCardge
-      have hcardlt : #(B1 \ {e}) < #B2 := calc
-        #(B1 \ {e}) = #B1 - #{e} := Finset.card_sdiff esub
-        _= #B1 - 1 := by simp only [Finset.card_singleton, ge_iff_le]
-        _< #B1 - 1 + 1 := by
-          simp only [ge_iff_le, Finset.card_eq_zero, lt_add_iff_pos_right]
-        _= #B1 := Nat.sub_add_cancel hCardge
-        _= #B2 := Eq
-      have app := imat.i3 (B1 \ {e}) Bmind B2 hB2.left hcardlt
-      apply Exists.elim app
-      intro f hf
-      apply Exists.intro f
-      apply And.intro
-      simp only [Finset.mem_sdiff]
-      have hfr := hf.right
-      have hfl := hf.left
-      simp only [Finset.mem_sdiff, Finset.mem_singleton, not_and, not_not] at hfl
-      apply And.intro
-      exact hfl.left
-      intro fB1
-      have hB1lj := hfl.right fB1
-      simp only [Finset.mem_sdiff] at he
-      apply he.right
-      rw [hB1lj.symm]
-      exact hfl.left
-      simp only [Finset.mem_filter]
-      apply And.intro
-      exact hf.right
-      intro I hI hBsubI
-      have ex := ind_lem2 I hI
-      apply Exists.elim ex
-      intro B3 hB3
-      have hB3r := hB3.right
-      have hB3 := hB3.left
-      have hCardEq : #B1 = #B3 := ind_lem1 α imat B1 hB1' B3 hB3
-      have diffDisj : Disjoint (B1 \ {e}) {f} := by
-        simp only [Finset.disjoint_singleton_right, Finset.mem_sdiff,
-          Finset.mem_singleton, not_and, not_not]
-        intro hfB1
-        rename_i inst hB3_1
-        simp_all only [Finset.mem_sdiff, Finset.mem_filter, true_and,
-          not_true, Finset.sdiff_subset, Finset.mem_powerset,
-          Finset.singleton_subset_iff, Finset.mem_singleton, not_and,
-          not_not, Finset.sdiff_union_self_eq_union, and_true]
-      have hCardDiffU : #(B1 \ {e} ∪ {f}) = #B1 := calc
-        #(B1 \ {e} ∪ {f}) = #(B1 \ {e}) + #({f}) :=
-          Finset.card_disjoint_union diffDisj
-        _= #(B1 \ {e}) + 1 := by simp only [Finset.card_singleton]
-        _= #(B1) - #({e}) + 1 :=
-          by simp only [Finset.card_sdiff esub, Finset.card_singleton, ge_iff_le,
-          Finset.card_eq_zero]
-        _= #B1 - 1 + 1 :=
-          by simp only [Finset.card_singleton, ge_iff_le, Finset.card_eq_zero]
-        _= #B1 := Nat.sub_add_cancel hCardge
-      rw [hCardDiffU.symm] at hCardEq
-      have hBsubI := hBsubI
-      have hbeep : #I ≤ #B3 := Finset.card_le_of_subset hB3r
-      rw [hCardEq.symm] at hbeep
-      exact Finset.eq_of_subset_of_card_le hBsubI hbeep
-  }
-
-lemma B_i3 {α : Type} [DecidableEq α] (bmat : BMatroid α) :
+lemma b_i3 {α : Type} [DecidableEq α] (bmat : BMatroid α) :
   ∀ (I1 : Finset α),
   I1 ∈ Finset.filter (fun I => ∃ B, B ∈ BMatroid.basis ∧ I ⊆ B) (Finset.powerset BMatroid.E) →
   ∀ (I2 : Finset α),
@@ -1220,44 +897,580 @@ lemma B_i3 {α : Type} [DecidableEq α] (bmat : BMatroid α) :
         sorry
     sorry
 
-def B_to_I_conv (α : Type) [DecidableEq α] : BMatroid α → IMatroid α :=
-  fun bmat ↦ {
-    E := bmat.E
-    ind := Finset.filter (fun I ↦ ∃B ∈ bmat.basis, I ⊆ B) bmat.E.powerset
-    indPow := by
-      intro B1 hB1
+lemma b_i1 {α : Type} [DecidableEq α] (bmat : BMatroid α) :
+  ∅ ∈ Finset.filter (fun I => ∃ B, B ∈ bmat.basis ∧ I ⊆ B) (bmat.E.powerset) := by
+    simp only [Finset.mem_filter, Finset.empty_subset, and_true]
+    apply And.intro
+    rename_i inst
+    simp_all only [Finset.mem_powerset, Finset.empty_subset]
+    have b1 := bmat.b1
+    have b1 := Finset.nonempty_of_ne_empty b1
+    exact b1
+
+lemma b_i2 {α : Type} [DecidableEq α] (bmat : BMatroid α) :
+  ∀ (I2 : Finset α),
+  I2 ∈ Finset.filter (fun I => ∃ B, B ∈ BMatroid.basis ∧ I ⊆ B) (Finset.powerset BMatroid.E) →
+    ∀ (I1 : Finset α),
+      I1 ∈ Finset.powerset BMatroid.E →
+        I1 ⊆ I2 → I1 ∈ Finset.filter (fun I => ∃ B, B ∈ BMatroid.basis ∧ I ⊆ B) (Finset.powerset BMatroid.E) :=
+  by
+    intro I2 hI2 I1 hI1 hSub
+    simp only [Finset.mem_powerset, Finset.mem_filter] at hI2
+    let hI2r := hI2.right
+    apply Exists.elim hI2r
+    intro B hB
+    simp only [Finset.mem_powerset, Finset.mem_filter]
+    apply And.intro
+    rename_i inst
+    simp_all only [Finset.mem_powerset]
+    apply Exists.intro B
+    apply And.intro hB.left
+    exact Finset.Subset.trans hSub hB.right
+
+lemma i_b1 {α : Type} [DecidableEq α] (imat : IMatroid α) :
+  Finset.filter (fun I1 => ∀ (I2 : Finset α), I2 ∈ IMatroid.ind → I1 ⊆ I2 → I1 = I2) IMatroid.ind ≠ ∅ := by
+    let maxInd : ℕ := Finset.fold Nat.max 0 Finset.card imat.ind
+    have hLeqSelf : maxInd ≤ Finset.fold Nat.max 0 Finset.card imat.ind := by
+        simp only [le_refl]
+    have hx := (Finset.le_fold_max maxInd).mp hLeqSelf
+    apply Finset.Nonempty.ne_empty
+    apply Or.elim hx
+    intro leq0
+    have eq0 : maxInd = 0 := by linarith
+    apply Exists.intro ∅
+    simp only [Finset.mem_filter, Finset.empty_subset, not_true]
+    apply And.intro
+    exact imat.i1
+    intro I hI _
+    apply Or.elim (Classical.em (∅ = I))
+    simp only [imp_self]
+    intro nonempty
+    have nonempty : ¬ I = ∅ := by
+      rename_i inst a
+      simp_all only [le_refl, Finset.mem_filter, zero_le, and_true, true_or]
+      apply Aesop.BuiltinRules.not_intro
+      intro a
+      aesop_subst a
+      simp_all only [not_true]
+    apply False.elim
+    have nonempty := Finset.nonempty_iff_ne_empty.mpr nonempty
+    have cardPos := Finset.Nonempty.card_pos nonempty
+    have leq02 := ((Finset.fold_max_le 0).mp leq0).right I hI
+    linarith
+    intro hEx
+    apply Exists.elim hEx
+    intro I1 hI1
+    apply Exists.intro I1
+    simp only [Finset.mem_filter]
+    apply And.intro
+    exact hI1.left
+    intro I2 hI2 hsub
+    have hImax := hI1.right
+    have maxCond := ((Finset.fold_max_le maxInd).mp hLeqSelf).right I2 hI2
+    have I2lI1 := Nat.le_trans maxCond hImax
+    exact Finset.eq_of_subset_of_card_le hsub I2lI1
+
+lemma i_b2 {α : Type} [DecidableEq α] (imat : IMatroid α) :
+  ∀ (B1 : Finset α),
+  B1 ∈ Finset.filter (fun I1 => ∀ (I2 : Finset α), I2 ∈ IMatroid.ind → I1 ⊆ I2 → I1 = I2) IMatroid.ind →
+    ∀ (B2 : Finset α),
+      B2 ∈ Finset.filter (fun I1 => ∀ (I2 : Finset α), I2 ∈ IMatroid.ind → I1 ⊆ I2 → I1 = I2) IMatroid.ind →
+        ∀ (e : α),
+          e ∈ B1 \ B2 →
+            ∃ f,
+              f ∈ B2 \ B1 ∧
+                B1 \ {e} ∪ {f} ∈
+                  Finset.filter (fun I1 => ∀ (I2 : Finset α), I2 ∈ IMatroid.ind → I1 ⊆ I2 → I1 = I2) IMatroid.ind := by
+    intro B1 hB1 B2 hB2 e he
+    have hB1' := hB1
+    have hB2' := hB2
+    simp only [Finset.mem_filter] at hB1
+    simp only [Finset.mem_filter] at hB2
+    have Bmsubs : B1 \ {e} ⊆ B1 := by
+      simp_all only [Finset.mem_sdiff, not_true, Finset.sdiff_subset]
+    have Bmpow : B1 \ {e} ∈ Finset.powerset IMatroid.E := by
+      simp only [Finset.mem_powerset]
+      intro b hb
+      simp only [Finset.mem_sdiff, Finset.mem_singleton] at hb
+      have hpow : B1 ∈ imat.E.powerset := imat.indPow hB1.left
+      simp only [Finset.mem_powerset] at hpow
+      exact hpow hb.left
+    have Bmind : B1 \ {e} ∈ imat.ind :=
+      imat.i2 B1 hB1.left (B1 \ {e}) Bmpow Bmsubs
+    have Eq : #B1 = #B2 := ind_lem1 α imat B1 hB1' B2 hB2'
+    have esub : {e} ⊆ B1 := by
       rename_i inst
-      simp_all only [Finset.mem_powerset, Finset.mem_filter]
-    i1 := by
-      simp only [Finset.mem_filter, Finset.empty_subset, and_true]
-      apply And.intro
-      rename_i inst
-      simp_all only [Finset.mem_powerset, Finset.empty_subset]
-      have b1 := bmat.b1
-      have b1 := Finset.nonempty_of_ne_empty b1
-      exact b1
-    i2 := by
-      intro I2 hI2 I1 hI1 hSub
+      simp_all only [Finset.mem_sdiff, not_true, Finset.sdiff_subset,
+      Finset.mem_powerset, Finset.singleton_subset_iff]
+    have hCardge : #{e} ≤ #B1 := Finset.card_le_of_subset esub
+    simp only [Finset.card_singleton] at hCardge
+    have hcardlt : #(B1 \ {e}) < #B2 := calc
+      #(B1 \ {e}) = #B1 - #{e} := Finset.card_sdiff esub
+      _= #B1 - 1 := by simp only [Finset.card_singleton, ge_iff_le]
+      _< #B1 - 1 + 1 := by
+        simp only [ge_iff_le, Finset.card_eq_zero, lt_add_iff_pos_right]
+      _= #B1 := Nat.sub_add_cancel hCardge
+      _= #B2 := Eq
+    have app := imat.i3 (B1 \ {e}) Bmind B2 hB2.left hcardlt
+    apply Exists.elim app
+    intro f hf
+    apply Exists.intro f
+    apply And.intro
+    simp only [Finset.mem_sdiff]
+    have hfr := hf.right
+    have hfl := hf.left
+    simp only [Finset.mem_sdiff, Finset.mem_singleton, not_and, not_not] at hfl
+    apply And.intro
+    exact hfl.left
+    intro fB1
+    have hB1lj := hfl.right fB1
+    simp only [Finset.mem_sdiff] at he
+    apply he.right
+    rw [hB1lj.symm]
+    exact hfl.left
+    simp only [Finset.mem_filter]
+    apply And.intro
+    exact hf.right
+    intro I hI hBsubI
+    have ex := ind_lem2 I hI
+    apply Exists.elim ex
+    intro B3 hB3
+    have hB3r := hB3.right
+    have hB3 := hB3.left
+    have hCardEq : #B1 = #B3 := ind_lem1 α imat B1 hB1' B3 hB3
+    have diffDisj : Disjoint (B1 \ {e}) {f} := by
+      simp only [Finset.disjoint_singleton_right, Finset.mem_sdiff,
+        Finset.mem_singleton, not_and, not_not]
+      intro hfB1
+      rename_i inst hB3_1
+      simp_all only [Finset.mem_sdiff, Finset.mem_filter, true_and,
+        not_true, Finset.sdiff_subset, Finset.mem_powerset,
+        Finset.singleton_subset_iff, Finset.mem_singleton, not_and,
+        not_not, Finset.sdiff_union_self_eq_union, and_true]
+    have hCardDiffU : #(B1 \ {e} ∪ {f}) = #B1 := calc
+      #(B1 \ {e} ∪ {f}) = #(B1 \ {e}) + #({f}) :=
+        Finset.card_disjoint_union diffDisj
+      _= #(B1 \ {e}) + 1 := by simp only [Finset.card_singleton]
+      _= #(B1) - #({e}) + 1 :=
+        by simp only [Finset.card_sdiff esub, Finset.card_singleton, ge_iff_le,
+        Finset.card_eq_zero]
+      _= #B1 - 1 + 1 :=
+        by simp only [Finset.card_singleton, ge_iff_le, Finset.card_eq_zero]
+      _= #B1 := Nat.sub_add_cancel hCardge
+    rw [hCardDiffU.symm] at hCardEq
+    have hBsubI := hBsubI
+    have hbeep : #I ≤ #B3 := Finset.card_le_of_subset hB3r
+    rw [hCardEq.symm] at hbeep
+    exact Finset.eq_of_subset_of_card_le hBsubI hbeep
+
+lemma r_i1 {α : Type} [DecidableEq α] (rmat : RMatroid α) :
+  ∅ ∈ Finset.filter (fun I => RMatroid.rk I = #I) (rmat.E.powerset) := by
+    simp only [Finset.mem_powerset, Finset.mem_filter]
+    apply And.intro
+    intro a ha
+    apply False.elim
+    rename_i inst
+    simp_all only [Finset.not_mem_empty]
+    rw [Finset.card_empty]
+    have h1 : ∅ ∈ rmat.E.powerset := by
+      simp only [Finset.mem_powerset, Finset.empty_subset]
+    have h2 : RMatroid.rk ∅ ≤ #∅ := (RMatroid.r1 ∅) h1
+    rename_i inst
+    simp_all only [Finset.mem_powerset,
+      Finset.empty_subset, Finset.card_empty, nonpos_iff_eq_zero]
+
+lemma r_i2 {α : Type} [DecidableEq α] (rmat : RMatroid α) :
+  ∀ (I2 : Finset α),
+  I2 ∈ Finset.filter (fun I => RMatroid.rk I = #I) (Finset.powerset RMatroid.E) →
+    ∀ (I1 : Finset α),
+      I1 ∈ Finset.powerset RMatroid.E →
+        I1 ⊆ I2 → I1 ∈ Finset.filter (fun I => RMatroid.rk I = #I) (Finset.powerset RMatroid.E) := by
+    intro I1 hI1 I2 hI2 hSub
+    simp only [Finset.mem_powerset, Finset.mem_filter]
+    simp only [Finset.mem_powerset, Finset.mem_filter] at hI2
+    simp only [Finset.mem_powerset, Finset.mem_filter] at hI1
+    apply And.intro
+    exact hI2
+    have h1 : I1 ∈ RMatroid.E.powerset := by
+      simp only [Finset.mem_powerset, hI1.left]
+    have h2 : I2 ∈ RMatroid.E.powerset := by
+      simp only [Finset.mem_powerset, hI2]
+    exact rank_lem3 rmat I1 h1 I2 h2 hI1.right hSub
+
+lemma r_i3 {α : Type} [DecidableEq α] (rmat : RMatroid α) :
+  ∀ (I1 : Finset α),
+  I1 ∈ Finset.filter (fun I => RMatroid.rk I = #I) (Finset.powerset RMatroid.E) →
+    ∀ (I2 : Finset α),
+      I2 ∈ Finset.filter (fun I => RMatroid.rk I = #I) (Finset.powerset RMatroid.E) →
+        #I1 < #I2 →
+          ∃ e, e ∈ I2 \ I1 ∧ I1 ∪ {e} ∈ Finset.filter (fun I => RMatroid.rk I = #I) (Finset.powerset RMatroid.E) := by
+    intro I1 hI1 I2 hI2 hcard
+    apply Or.elim (Classical.em
+      (∃ e, e ∈ I2 \ I1 ∧ I1 ∪ {e} ∈ Finset.filter
+      (fun I => RMatroid.rk I = #I)
+      (Finset.powerset RMatroid.E)))
+    intro h
+    exact h
+    intro contra
+    apply False.elim
+    have contra := forall_not_of_not_exists contra
+    have hI1pow : I1 ∈ rmat.E.powerset := by
+      simp only [Finset.mem_powerset, Finset.mem_filter] at hI1
+      simp only [Finset.mem_powerset]
+      exact hI1.left
+    have hI2pow : I2 ∈ rmat.E.powerset := by
       simp only [Finset.mem_powerset, Finset.mem_filter] at hI2
-      let hI2r := hI2.right
-      apply Exists.elim hI2r
-      intro B hB
+      simp only [Finset.mem_powerset]
+      exact hI2.left
+    have Upow : I1 ∪ I2 ∈ Finset.powerset RMatroid.E := by
+      simp only [Finset.mem_powerset]
+      intro e
+      simp only [Finset.mem_union]
+      intro hor
+      apply Or.elim hor
+      intro heI1
+      simp only [Finset.mem_powerset] at hI1pow
+      apply hI1pow
+      exact heI1
+      intro heI2
+      simp only [Finset.mem_powerset] at hI2pow
+      apply hI2pow
+      exact heI2
+    have hBig :
+      ∀ (e : α), e ∈ I1 ∪ I2 → RMatroid.rk I1 = RMatroid.rk (I1 ∪ {e}) := by
+      intro e he
+      apply Or.elim (Classical.em (e ∈ I1))
+      intro heInI1
+      have hesub : {e} ⊆ I1 := by
+        simp only [Finset.singleton_subset_iff, heInI1]
+      have hunion : I1 = I1 ∪ {e} := by
+        rename_i inst contra_1
+        simp_all only [Finset.mem_powerset, Finset.mem_filter, sdiff_self,
+        Finset.bot_eq_empty, Finset.not_mem_empty,
+        Finset.disjoint_singleton_right, false_and, exists_false, not_false_eq_true,
+        implies_true, Finset.mem_union,
+        true_or, Finset.singleton_subset_iff, Finset.left_eq_union_iff_subset]
+      rw [hunion.symm]
+      intro henInI1
+      have heInI2 : e ∈ I2 := by
+        rename_i inst contra_1
+        simp_all only [Finset.mem_powerset, Finset.mem_filter,
+          sdiff_self, Finset.bot_eq_empty, Finset.not_mem_empty,
+          Finset.disjoint_singleton_right, false_and, exists_false,
+          not_false_eq_true, implies_true, Finset.mem_union,
+          false_or]
+      have heInDiff : e ∈ I2 \ I1 := by
+        simp only [Finset.mem_sdiff]
+        apply And.intro heInI2 henInI1
+      have hinE : e ∈ rmat.E := by
+        simp only [Finset.mem_powerset] at hI2pow
+        apply hI2pow
+        exact heInI2
+      have hr3 := RMatroid.r3 I1 hI1pow e hinE
+      apply Or.elim (Classical.em (RMatroid.rk (I1 ∪ {e})  ≤ RMatroid.rk I1))
+      intro hcase1
+      exact Nat.le_antisymm hr3.left hcase1
+      intro hcase2
+      have hrk : RMatroid.rk (I1 ∪ {e}) = RMatroid.rk (I1) + 1 := by
+        linarith
+      have hcont := contra e
+      apply False.elim
+      apply hcont
+      apply And.intro
+      exact heInDiff
+      have hdisj : Disjoint I1 {e} := by
+        simp only [Finset.disjoint_singleton_right]
+        exact henInI1
+      have hcard2 : #(I1 ∪ {e}) = #(I1) + 1 := calc
+        #(I1 ∪ {e}) = #I1 + #{e} := by
+          simp only [Finset.disjoint_singleton_right, henInI1,
+            not_false_eq_true, Finset.card_disjoint_union,
+            Finset.card_singleton]
+        _= #(I1) + 1 := by
+          simp only [Finset.card_singleton]
+      simp only [Finset.mem_powerset, Finset.mem_filter,
+        Finset.disjoint_singleton_right]
+      have hinSubs : I1 ∪ {e} ⊆ RMatroid.E := by
+        intro f
+        rename_i inst contra_1
+        intro a
+        simp_all only [Finset.mem_powerset, Finset.mem_filter, Finset.mem_sdiff, Finset.disjoint_singleton_right, not_exists,
+          not_and, not_false_eq_true, Finset.card_disjoint_union, Finset.card_singleton, and_imp, implies_true,
+          Finset.mem_union, or_true, and_self, le_add_iff_nonneg_right, le_refl, add_le_iff_nonpos_right, and_true, true_and,
+          Finset.mem_singleton]
+        unhygienic with_reducible aesop_destruct_products
+        unhygienic aesop_cases a
+        · apply left
+          simp_all only [not_false_eq_true]
+        · aesop_subst h
+          simp_all only [not_false_eq_true]
+      apply And.intro
+      exact hinSubs
+      rw [hcard2, hrk]
+      simp? at hI1
+      rw [hI1.right]
+    have subU : I1 ⊆ I1 ∪ I2 := Finset.subset_union_left I1 I2
+    have hUnRk := rank_lem7 α rmat I1 hI1pow (I1 ∪ I2) Upow subU
+    have contra := hUnRk hBig
+    let n : ℕ := #(I1 ∪ I2) - #I2
+    have hndef : n = #(I1 ∪ I2) - #I2 := by
+      simp only [ge_iff_le]
+    have hlem := rank_lem8 α rmat n I2 hI2pow (I1 ∪ I2) Upow
+      (Finset.subset_union_right I1 I2) hndef.symm
+    rw [contra.symm] at hlem
+    simp only [Finset.mem_powerset, Finset.mem_filter] at hI1
+    simp only [Finset.mem_powerset, Finset.mem_filter] at hI2
+    rw [hI1.right] at hlem
+    rw [hI2.right] at hlem
+    linarith
+
+lemma i_r1 {α : Type} [DecidableEq α] (imat : IMatroid α) :
+  ∀ (A : Finset α),
+  A ∈ Finset.powerset imat.E →
+  (fun S => Finset.fold max 0 Finset.card (Finset.filter (fun I => I ⊆ S) IMatroid.ind)) A ≤ #A :=
+  by
+    intro A hA
+    simp only
+    let maxInd :=
+      Finset.fold max 0 Finset.card (Finset.filter (fun I => I ⊆ A) IMatroid.ind)
+    have leqS : maxInd ≤
+      Finset.fold max 0 Finset.card (Finset.filter (fun I => I ⊆ A) IMatroid.ind) :=
+      by simp only [le_refl]
+    have hc := ((Finset.fold_max_le maxInd).mp leqS).right
+    have hl := (Finset.le_fold_max maxInd).mp leqS
+    apply Or.elim hl
+    intro max0
+    have m0 : maxInd = 0 := by linarith
+    simp only at m0
+    rw [m0]
+    rename_i inst
+    simp_all only [Finset.mem_powerset, le_refl, Finset.mem_filter, nonpos_iff_eq_zero,
+      Finset.card_eq_zero, and_imp, zero_le, and_true, true_or]
+    intro ex
+    apply Exists.elim ex
+    intro I hI
+    have hIother := hc I hI.left
+    have hEq : #I = maxInd := Nat.le_antisymm hIother hI.right
+    simp only at hEq
+    rw [hEq.symm]
+    simp only [Finset.mem_filter, ge_iff_le] at hI
+    exact Finset.card_le_of_subset hI.left.right
+
+lemma i_c1 {α : Type} [DecidableEq α] (imat : IMatroid α) :
+  ¬∅ ∈ Finset.filter (fun S => ¬S ∈ IMatroid.ind ∧ ∀ (e : α), e ∈ S → S \ {e} ∈ IMatroid.ind)
+  (Finset.powerset IMatroid.E) := by
+      intro hEmpt
+      simp only [Finset.mem_powerset, Finset.mem_filter, Finset.empty_subset,
+        Finset.not_mem_empty, not_false_eq_true,
+        Finset.sdiff_singleton_eq_self, IsEmpty.forall_iff,
+        implies_true, and_true, true_and] at hEmpt
+      apply hEmpt
+      exact imat.i1
+
+lemma i_c2 {α : Type} [DecidableEq α] (imat : IMatroid α) :
+  ∀ (C1 : Finset α),
+  C1 ∈
+      Finset.filter (fun S => ¬S ∈ IMatroid.ind ∧ ∀ (e : α), e ∈ S → S \ {e} ∈ IMatroid.ind)
+        (Finset.powerset IMatroid.E) →
+    ∀ (C2 : Finset α),
+      C2 ∈ Finset.powerset IMatroid.E →
+        C2 ⊂ C1 →
+          ¬C2 ∈
+              Finset.filter (fun S => ¬S ∈ IMatroid.ind ∧ ∀ (e : α), e ∈ S → S \ {e} ∈ IMatroid.ind)
+                (Finset.powerset IMatroid.E) :=
+  by
+    intro C1 hC1 C2 hC2 hsubN
+    have hsubs : C2 ⊆ C1 := (Finset.ssubset_iff_subset_ne.mp hsubN).left
+    simp only [Finset.mem_powerset, Finset.mem_filter, not_and,
+      not_forall, exists_prop]
+    simp only [Finset.mem_powerset, Finset.mem_filter] at hC1
+    intro C2subs hC2subs
+    have hEx := Finset.exists_of_ssubset hsubN
+    apply Exists.elim hEx
+    intro e he
+    apply False.elim
+    have hsubs3 : C2 ⊆ C1 \ {e} := by
+      intro c hc
+      simp only [Finset.mem_sdiff, Finset.mem_singleton]
+      apply And.intro
+      apply hsubs
+      exact hc
+      intro cont
+      rw [cont] at hc
+      exact he.right hc
+    have hmInd : C1 \ {e} ∈ imat.ind := hC1.right.right e he.left
+    have hC2ind := imat.i2 (C1 \ {e}) hmInd C2 hC2 hsubs3
+    exact hC2subs hC2ind
+
+lemma c_i1 {α : Type} [DecidableEq α] (cmat : CMatroid α) :
+  ∅ ∈ Finset.filter (fun S => ∀ (C : Finset α), C ∈ cmat.circ → ¬C ⊆ S) (Finset.powerset CMatroid.E) :=
+  by
+    simp only [Finset.mem_powerset, Finset.mem_filter,
+      Finset.empty_subset, true_and]
+    intro C hC f
+    have f := Finset.subset_empty.mp f
+    rw [f] at hC
+    exact cmat.c1 hC
+
+lemma c_i2 {α : Type} [DecidableEq α] (cmat : CMatroid α) :
+  ∀ (I2 : Finset α),
+  I2 ∈ Finset.filter (fun S => ∀ (C : Finset α), C ∈ CMatroid.circ → ¬C ⊆ S) (Finset.powerset CMatroid.E) →
+    ∀ (I1 : Finset α),
+      I1 ∈ Finset.powerset CMatroid.E →
+        I1 ⊆ I2 →
+          I1 ∈ Finset.filter (fun S => ∀ (C : Finset α), C ∈ CMatroid.circ → ¬C ⊆ S) (Finset.powerset CMatroid.E) :=
+    by
+      intro I2 hI2 I1 hI1 hsubs
       simp only [Finset.mem_powerset, Finset.mem_filter]
       apply And.intro
       rename_i inst
-      simp_all only [Finset.mem_powerset]
-      apply Exists.intro B
-      apply And.intro hB.left
-      exact Finset.Subset.trans hSub hB.right
-    i3 := B_i3 bmat
+      simp_all only [Finset.mem_powerset, Finset.mem_filter]
+      intro C hC hcont
+      have htrans := Finset.Subset.trans hcont hsubs
+      simp only [Finset.mem_powerset, Finset.mem_filter] at hI2
+      exact (hI2.right C hC) htrans
 
-  }
+lemma cl_h1 {α : Type} [DecidableEq α] (clmat : ClMatroid α) :
+  ∀ (A1 : Finset α),
+  A1 ∈ Finset.powerset ClMatroid.E →
+    ∀ (A2 : Finset α),
+      A2 ∈ Finset.powerset ClMatroid.E →
+        A2 ⊂ A1 →
+          ¬A1 ∈
+                Finset.filter
+                  (fun S =>
+                    ClMatroid.cl S = S ∧
+                      (∀ (e : α), e ∈ ClMatroid.E \ S → ClMatroid.cl (S ∪ {e}) = ClMatroid.E) ∧
+                        ClMatroid.cl S ≠ ClMatroid.E)
+                  (Finset.powerset ClMatroid.E) ∨
+            ¬A2 ∈
+                Finset.filter
+                  (fun S =>
+                    ClMatroid.cl S = S ∧
+                      (∀ (e : α), e ∈ ClMatroid.E \ S → ClMatroid.cl (S ∪ {e}) = ClMatroid.E) ∧
+                        ClMatroid.cl S ≠ ClMatroid.E)
+                  (Finset.powerset ClMatroid.E) :=
+    by
+      intro A1 hA1 A2 hA2 hsubs
+      have hsubs2 : A2 ⊆ A1 := (Finset.ssubset_iff_subset_ne.mp hsubs).left
+      let hyp := Finset.filter
+        (fun S =>
+          ClMatroid.cl S = S ∧ (∀ (e : α),
+          e ∈ ClMatroid.E \ S → ClMatroid.cl (S ∪ {e}) = ClMatroid.E) ∧
+          clmat.cl S ≠ clmat.E)
+        (Finset.powerset ClMatroid.E)
+      have hypDef : hyp = Finset.filter
+        (fun S =>
+          ClMatroid.cl S = S ∧ (∀ (e : α),
+          e ∈ ClMatroid.E \ S → ClMatroid.cl (S ∪ {e}) = ClMatroid.E) ∧
+          clmat.cl S ≠ clmat.E)
+        (clmat.E.powerset) := by rfl
+      rw [hypDef.symm]
+      apply Or.elim (Classical.em (A2 ∈ hyp))
+      intro hA2hyp
+      apply Or.inl
+      simp only [Finset.mem_powerset, Finset.mem_sdiff, and_imp, true_and,
+        Finset.mem_filter] at hA2hyp
+      have hEx := Finset.exists_of_ssubset hsubs
+      apply Exists.elim hEx
+      intro e he
+      have he2 : e ∈ ClMatroid.E := by
+        simp only [Finset.mem_powerset] at hA1
+        apply hA1
+        exact he.left
+      have hApp := hA2hyp.right.right.left e he2 he.right
+      have hsubs3 : A2 ∪ {e} ⊆ A1 := by
+        intro f hf
+        simp only [Finset.mem_union, Finset.mem_singleton] at hf
+        apply Or.elim hf
+        intro hfA2
+        apply hsubs2
+        exact hfA2
+        intro hfe
+        rename_i inst
+        aesop_subst hfe
+        simp_all only [Finset.mem_powerset, Finset.mem_sdiff, and_imp,
+          true_and, not_false_eq_true, or_true]
+      have hclosure := clmat.cl3 (A2 ∪ {e}) A1 hsubs3
+      rw [hApp] at hclosure
+      have hEPow : clmat.E ∈ clmat.E.powerset :=
+        by simp only [Finset.mem_powerset, Finset.Subset.refl]
+      have hE := clmat.cl1 clmat.E hEPow
+      have hK := clmat.clPow A1 hA1
+      simp only [Finset.mem_powerset] at hK
+      have hEq2 : ClMatroid.cl A1 = clmat.E :=
+      Finset.Subset.antisymm hK hclosure
+      simp only [Finset.mem_filter]
+      intro cont
+      exact cont.right.right.right hEq2
+      intro hnA2hyp
+      apply Or.inr hnA2hyp
 
-theorem B_and_I_equiv (α : Type) [DecidableEq α]:
-  Function.LeftInverse (B_to_I_conv α) (I_to_B_conv α) ∧
-  Function.RightInverse (B_to_I_conv α) (I_to_B_conv α) := by
-    apply And.intro
-    intro imat
-    rw [B_to_I_conv, I_to_B_conv]
-    let fild :=
-      Finset.filter (fun I1 => ∀ (I2 : Finset α), I2 ∈ imat.ind → I1 ⊆ I2 → I1 = I2) IMatroid.ind
+lemma h_cl1 {α : Type} [DecidableEq α] (hmat : HMatroid α) :
+  ∀ (A : Finset α),
+  A ∈ Finset.powerset HMatroid.E →
+    A ⊆ (fun S => Finset.filter (fun e => ∀ (H : Finset α), H ∈ HMatroid.hyp → S ⊆ H → e ∈ H) HMatroid.E) A := by
+      intro S hS e he
+      simp only [Finset.mem_filter]
+      apply And.intro
+      simp only [Finset.mem_powerset] at hS
+      exact hS he
+      intro H hH hsubs
+      exact hsubs he
+
+lemma h_cl2 {α : Type} [DecidableEq α] (hmat : HMatroid α) :
+  ((fun S => Finset.filter (fun e => ∀ (H : Finset α), H ∈ HMatroid.hyp → S ⊆ H → e ∈ H) HMatroid.E) ∘ fun S =>
+    Finset.filter (fun e => ∀ (H : Finset α), H ∈ HMatroid.hyp → S ⊆ H → e ∈ H) HMatroid.E) =
+  fun S => Finset.filter (fun e => ∀ (H : Finset α), H ∈ HMatroid.hyp → S ⊆ H → e ∈ H) HMatroid.E := by
+      apply Function.funext_iff.mpr
+      intro S
+      apply Finset.Subset.antisymm
+      intro a ha
+      simp only [Function.comp_apply, Finset.mem_filter] at ha
+      simp only [Finset.mem_filter]
+      apply And.intro
+      exact ha.left
+      intro H hH hSH
+      have ha1 := ha.right H hH
+      apply ha1
+      intro e he
+      simp only [Finset.mem_filter] at he
+      apply he.right H hH hSH
+      intro a ha
+      simp only [Function.comp_apply, Finset.mem_filter]
+      apply And.intro
+      rename_i inst
+      simp_all only [Finset.mem_filter]
+      intro H1 hH1 hSub
+      apply hSub
+      simp only [Finset.mem_filter]
+      apply And.intro
+      rename_i inst
+      simp_all only [Finset.mem_filter]
+      intro H2 hH2 hSub2
+      simp only [Finset.mem_filter] at ha
+      apply ha.right H2 hH2 hSub2
+
+lemma h_cl3 {α : Type} [DecidableEq α] (hmat : HMatroid α) :
+  ∀ (A B : Finset α),
+  A ⊆ B →
+    (fun S => Finset.filter (fun e => ∀ (H : Finset α), H ∈ HMatroid.hyp → S ⊆ H → e ∈ H) HMatroid.E) A ⊆
+      (fun S => Finset.filter (fun e => ∀ (H : Finset α), H ∈ HMatroid.hyp → S ⊆ H → e ∈ H) HMatroid.E) B := by
+      intro A B hSub
+      intro a hA
+      simp only [Finset.mem_filter]
+      apply And.intro
+      rename_i inst
+      simp_all only [Finset.mem_filter]
+      intro H hH hsub2
+      simp only [Finset.mem_filter] at hA
+      have hkl := hA.right H hH
+      apply hkl
+      exact Finset.Subset.trans hSub hsub2
+
+lemma cl_i1 {α : Type} [DecidableEq α] (clmat : ClMatroid α) :
+  ∅ ∈ Finset.filter (fun S => ∀ (e : α), e ∈ S → ClMatroid.cl S ≠ ClMatroid.cl (S \ {e})) (Finset.powerset ClMatroid.E) := by
+      simp only [ne_eq, Finset.mem_powerset, Finset.mem_filter,
+        Finset.empty_subset, Finset.not_mem_empty,
+        not_false_eq_true, Finset.sdiff_singleton_eq_self,
+        not_true, IsEmpty.forall_iff, implies_true, and_self]

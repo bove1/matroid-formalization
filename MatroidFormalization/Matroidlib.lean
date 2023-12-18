@@ -4,6 +4,8 @@ import Mathlib.Data.Finset.Basic
 import Mathlib.Tactic.LibrarySearch
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
+import Mathlib.SetTheory.Cardinal.Finite
+import Mathlib.SetTheory.Cardinal.Basic
 
 set_option autoImplicit false
 set_option tactic.hygienic false
@@ -15,5 +17,3 @@ open Lean.Parser.Term
 open Lean.Meta
 open Lean.Elab.Tactic
 open Lean.TSyntax
-
-#check Finset
